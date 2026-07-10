@@ -19,7 +19,10 @@ import de.spacepotato.sagittarius.network.protocol.login.ServerLoginSuccessPacke
 import de.spacepotato.sagittarius.network.protocol.play.*;
 import de.spacepotato.sagittarius.network.protocol.status.ClientStatusPingPacket;
 import de.spacepotato.sagittarius.network.protocol.status.ClientStatusRequestPacket;
+import de.spacepotato.sagittarius.network.protocol.status.ClientStatusResponsePacket;
+import de.spacepotato.sagittarius.network.protocol.status.ServerStatusPongPacket;
 import de.spacepotato.sagittarius.util.PlayerMovementTracker;
+import de.spacepotato.sagittarius.world.Location;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import lombok.Getter;
@@ -81,9 +84,8 @@ public class LimboChildHandler extends ChildNetworkHandler {
 	
 	@Override
 	public void handleHandshake(ClientHandshakePacket packet) {
-		// If the status is not login, then close the connection.
-		// TODO: handle status
-		if (packet.getNextState() != State.LOGIN.ordinal()) {
+		// Allow LOGIN and STATUS
+		if (packet.getNextState() != State.LOGIN.ordinal() && packet.getNextState() != State.STATUS.ordinal()) {
 			channel.close();
 			return;
 		}
@@ -101,12 +103,14 @@ public class LimboChildHandler extends ChildNetworkHandler {
 	
 	@Override
 	public void handleStatusRequest(ClientStatusRequestPacket packet) {
-
+		LimboConfig config = Sagittarius.getInstance().getConfig();
+		String json = "{\"version\":{\"name\":\"1.8.8\",\"protocol\":47},\"players\":{\"max\":" + config.getMaxPlayers() + ",\"online\":0},\"description\":{\"text\":\"" + config.getMotd() + "\"}}";
+		sendPacket(new ClientStatusResponsePacket(json));
 	}
 
 	@Override
 	public void handleStatusPing(ClientStatusPingPacket packet) {
-
+		sendPacket(new ServerStatusPongPacket(packet.getPayload()));
 	}
 	
 	// ============================================================ \\
@@ -152,6 +156,9 @@ public class LimboChildHandler extends ChildNetworkHandler {
 		sendPacket(cache.getPositionAndLook());
 		sendPacket(cache.getPlayerAbilities());
 		
+		Location spawn = config.getSpawnPoint();
+		sendPacket(new ServerNamedSoundEffectPacket("random.pop", spawn.getX(), spawn.getY(), spawn.getZ(), 1.0f, (byte) 63));
+		
 		
 		synchronized (Sagittarius.getInstance().getPlayers()) {
 			Sagittarius.getInstance().getPlayers().add(player);
@@ -186,7 +193,22 @@ public class LimboChildHandler extends ChildNetworkHandler {
 
 	@Override
 	public void handlePosition(ClientPositionPacket packet) {
-		movementTracker.onMove(packet.getX(), packet.getY(), packet.getZ());
+		boolean freeze = Sagittarius.getInstance().getConfig().isCancelMove() &&
+						Sagittarius.getInstance().getConfig().getGameMode() != GameMode.CREATIVE;
+		
+		if (freeze) {
+			Location spawn = Sagittarius.getInstance().getConfig().getSpawnPoint();
+			if (Math.abs(packet.getX() - spawn.getX()) > 0.01 ||
+				Math.abs(packet.getY() - spawn.getY()) > 0.01 ||
+				Math.abs(packet.getZ() - spawn.getZ()) > 0.01) {
+				sendPacket(SagittariusImpl.getInstance().getPacketCache().getPositionAndLook());
+				if (Sagittarius.getInstance().getConfig().shouldConnectOnMove()) {
+					movementTracker.tryConnect();
+				}
+			}
+		} else {
+			movementTracker.onMove(packet.getX(), packet.getY(), packet.getZ());
+		}
 	}
 
 	@Override
@@ -196,8 +218,25 @@ public class LimboChildHandler extends ChildNetworkHandler {
 
 	@Override
 	public void handlePositionLook(ClientPositionLookPacket packet) {
-		movementTracker.onMove(packet.getX(), packet.getY(), packet.getZ());
-		movementTracker.onRotate(packet.getYaw(), packet.getPitch());
+		boolean freeze = Sagittarius.getInstance().getConfig().isCancelMove() &&
+						Sagittarius.getInstance().getConfig().getGameMode() != GameMode.CREATIVE;
+		
+		if (freeze) {
+			Location spawn = Sagittarius.getInstance().getConfig().getSpawnPoint();
+			if (Math.abs(packet.getX() - spawn.getX()) > 0.01 ||
+				Math.abs(packet.getY() - spawn.getY()) > 0.01 ||
+				Math.abs(packet.getZ() - spawn.getZ()) > 0.01) {
+				sendPacket(SagittariusImpl.getInstance().getPacketCache().getPositionAndLook());
+				if (Sagittarius.getInstance().getConfig().shouldConnectOnMove()) {
+					movementTracker.tryConnect();
+				}
+			} else {
+				movementTracker.onRotate(packet.getYaw(), packet.getPitch());
+			}
+		} else {
+			movementTracker.onMove(packet.getX(), packet.getY(), packet.getZ());
+			movementTracker.onRotate(packet.getYaw(), packet.getPitch());
+		}
 	}
 
 }

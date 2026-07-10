@@ -41,6 +41,9 @@ public interface LimboConfig {
 	 */
 	int getNettyThreads();
 	
+	String getMotd();
+	int getMaxPlayers();
+	
 	/**
 	 * Returns the spawn point of the player in the current world.
 	 * @return The spawnpoint of the player.
@@ -252,5 +255,11 @@ public interface LimboConfig {
 	 * @return the world border's warning blocks.
 	 */
 	int getWorldBorderWarningBlocks();
+
+	/**
+	 * Returns true if players' movement should be canceled/frozen.
+	 * @return true if movement should be canceled.
+	 */
+	boolean isCancelMove();
 	
 }

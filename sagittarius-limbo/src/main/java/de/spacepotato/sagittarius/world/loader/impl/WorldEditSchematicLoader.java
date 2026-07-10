@@ -28,14 +28,9 @@ public class WorldEditSchematicLoader implements WorldLoader {
 			int lenY = compound.getTag("Height", NBTTagShort.class).getValue();
 			int lenZ = compound.getTag("Length", NBTTagShort.class).getValue();
 
-			int offsetX = compound.getTag("WEOffsetX", NBTTagInt.class).getValue();
-			int offsetY = compound.getTag("WEOffsetY", NBTTagInt.class).getValue();
-			int offsetZ = compound.getTag("WEOffsetZ", NBTTagInt.class).getValue();
-			
-			Location spawnPoint = Sagittarius.getInstance().getConfig().getSpawnPoint();
-			int worldOffsetX = (int) Math.floor(spawnPoint.getX());
-			int worldOffsetY = (int) Math.floor(spawnPoint.getY());
-			int worldOffsetZ = (int) Math.floor(spawnPoint.getZ());
+			int worldOffsetX = 0;
+			int worldOffsetY = 120;
+			int worldOffsetZ = 0;
 
 			byte[] blocks = compound.getTag("Blocks", NBTTagByteArray.class).getValue();
 			byte[] blockData = compound.getTag("Data", NBTTagByteArray.class).getValue();
@@ -51,7 +46,7 @@ public class WorldEditSchematicLoader implements WorldLoader {
 						if (blockId == 0) {
                             continue;
                         }
-						world.setTypeIdAndData(x + offsetX + worldOffsetX, y + offsetY + worldOffsetY, z + offsetZ + worldOffsetZ, blockId, data);
+						world.setTypeIdAndData(x + worldOffsetX, y + worldOffsetY, z + worldOffsetZ, blockId, data);
 					}
 				}
 			}
@@ -70,16 +65,16 @@ public class WorldEditSchematicLoader implements WorldLoader {
 						int x = tileEntity.getTag("x", NBTTagInt.class).getValue();
 						int y = tileEntity.getTag("y", NBTTagInt.class).getValue();
 						int z = tileEntity.getTag("z", NBTTagInt.class).getValue();
-						SignMetadata metaData = new SignMetadata(new BlockPosition(x + offsetX + worldOffsetX, y + offsetY + worldOffsetY, z + offsetZ + worldOffsetZ), line1, line2, line3, line4);
+						SignMetadata metaData = new SignMetadata(new BlockPosition(x + worldOffsetX, y + worldOffsetY, z + worldOffsetZ), line1, line2, line3, line4);
 						world.getMetadata().add(metaData);
 					} else if(id.equalsIgnoreCase("Skull")) {
 						int x = tileEntity.getTag("x", NBTTagInt.class).getValue();
 						int y = tileEntity.getTag("y", NBTTagInt.class).getValue();
 						int z = tileEntity.getTag("z", NBTTagInt.class).getValue();
-						tileEntity.getTag("x", NBTTagInt.class).setValue(x + offsetX + worldOffsetX);
-						tileEntity.getTag("y", NBTTagInt.class).setValue(y + offsetY + worldOffsetY);
-						tileEntity.getTag("z", NBTTagInt.class).setValue(z + offsetZ + worldOffsetZ);
-						SkullMetadata metadata = new SkullMetadata(new BlockPosition(x + offsetX + worldOffsetX, y + offsetY + worldOffsetY, z + offsetZ + worldOffsetZ), tileEntity);
+						tileEntity.getTag("x", NBTTagInt.class).setValue(x + worldOffsetX);
+						tileEntity.getTag("y", NBTTagInt.class).setValue(y + worldOffsetY);
+						tileEntity.getTag("z", NBTTagInt.class).setValue(z + worldOffsetZ);
+						SkullMetadata metadata = new SkullMetadata(new BlockPosition(x + worldOffsetX, y + worldOffsetY, z + worldOffsetZ), tileEntity);
 						world.getMetadata().add(metadata);
 					}
 				}
