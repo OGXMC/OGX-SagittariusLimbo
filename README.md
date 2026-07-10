@@ -1,4 +1,4 @@
-# Sagittarius - Standalone Minecraft Limbo
+# OGX-SagittariusLimbo - Standalone Minecraft Limbo
 Sagittarius is a small Minecraft Limbo project which aims to support any version starting from 1.8. This is accomplished by integrating ViaVersion into the server itself.
 Whilst this allows for quick version integration, it also binds us to a few restrictions set by ViaVersion. One of those restrictions is that *Java 17* is required in order to run Sagittarius.
 The name is inspired by the black hole [Sagittarius A*](https://en.wikipedia.org/wiki/Sagittarius_A*) which is also a slight reference to how limbo servers in general work.
